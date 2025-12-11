@@ -162,20 +162,25 @@ WSGI_APPLICATION = "config.wsgi.application"
 {% endif %}
 
 # Database
+{% if database == 'postgresql' -%}
 DATABASES = {
-    "default": {{% if database == 'postgresql' -%}
+    "default": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": env("POSTGRES_DB"),
         "USER": env("POSTGRES_USER"),
         "PASSWORD": env("POSTGRES_PASSWORD"),
         "HOST": env("POSTGRES_HOST"),
         "PORT": env("POSTGRES_PORT"),{% else %}
-        "ENGINE": "django.db.backends.sqlite3",{% endif -%}
     }
 }
-{% if database == 'postgresql' -%}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DATABASES["default"]["CONN_MAX_AGE"] = 60
+{% else- %}
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3"
+    }
+}
 {% endif -%}
 
 # Custom user model

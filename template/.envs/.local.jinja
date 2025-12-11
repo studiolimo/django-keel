@@ -1,0 +1,18 @@
+# Django Settings
+DJANGO_SECRET_KEY=changeme
+{% if database == 'postgresql' -%}
+# Database
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=localhost
+POSTGRES_PORT=8432
+POSTGRES_DB={{ project_slug }}_db
+POSTGRES_USER={{ project_slug }}_db_user
+POSTGRES_PASSWORD={{ project_slug }}_db_password
+{% endif -%}
+{% if use_stripe -%}
+# Stripe
+STRIPE_PUBLISHABLE_KEY=pk_test_your_key
+STRIPE_SECRET_KEY=sk_test_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_secret
+{% endif -%}
