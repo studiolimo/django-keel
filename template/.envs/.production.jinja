@@ -10,7 +10,9 @@ POSTGRES_DB=blocklize
 POSTGRES_USER=blocklize
 POSTGRES_PASSWORD=blocklize
 
+{% if use_stripe -%}
 # Stripe
 STRIPE_PUBLISHABLE_KEY=pk_test_your_key
 STRIPE_SECRET_KEY=sk_test_your_key
 STRIPE_WEBHOOK_SECRET=whsec_your_secret
+{% endif -%}

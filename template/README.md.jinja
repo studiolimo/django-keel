@@ -87,15 +87,15 @@ Description: {{ project_description }}"
    ```
    {% endif -%}
 
-3. **Set up environment variables**
+3. **Check (and change) env variables**
    ```bash
-   cp .env.example .env
-   # Edit .env with your settings
+   .envs/.local # local env variables
+   .envs/.production # production env variables
    ```
 
 4. **Start development services**
    ```bash
-   docker compose up -d
+   docker compose -f compose-local.yml up
    ```
 
 5. **Run migrations**
@@ -136,15 +136,15 @@ Description: {{ project_description }}"
    ```
    {% endif -%}
 
-2. **Set up environment variables**
+2. **Check (and change) env variables**
    ```bash
-   cp .env.example .env
-   # Edit .env with your settings
+   .envs/.local # local env variables
+   .envs/.production # production env variables
    ```
 
 3. **Start development services**
    ```bash
-   docker compose up -d
+   docker compose -f compose-local.yml up
    ```
 
 4. **Run migrations**
