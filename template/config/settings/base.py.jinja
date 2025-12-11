@@ -28,6 +28,9 @@ ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
 # Application definition
 DJANGO_APPS = [
+{% if use_i18n -%}
+    "modeltranslation",
+{% endif -%}
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -70,9 +73,6 @@ THIRD_PARTY_APPS = [
 {% endif -%}
 {% if use_search == 'opensearch' -%}
     "django_opensearch_dsl",
-{% endif -%}
-{% if use_i18n -%}
-    "parler",
 {% endif -%}
 {% if use_stripe and stripe_mode == 'advanced' -%}
     "djstripe",
@@ -175,7 +175,7 @@ DATABASES = {
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 DATABASES["default"]["CONN_MAX_AGE"] = 60
-{% else- %}
+{% else -%}
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3"
