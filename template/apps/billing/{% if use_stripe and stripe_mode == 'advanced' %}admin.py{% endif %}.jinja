@@ -1,7 +1,7 @@
 """Advanced billing admin using dj-stripe."""
 from django.contrib import admin
 from django.utils.html import format_html
-from djstripe.admin import SubscriptionAdmin as DjStripeSubscriptionAdmin
+from djstripe.admin.admin import SubscriptionAdmin as DjStripeSubscriptionAdmin
 from djstripe.models import Customer, Subscription, Price, Product, Event
 
 from .models import (
@@ -130,12 +130,12 @@ class PaymentIntentAdmin(admin.ModelAdmin):
 class CustomSubscriptionAdmin(DjStripeSubscriptionAdmin):
     """Enhanced subscription admin."""
 
-    list_display = DjStripeSubscriptionAdmin.list_display + [
+    list_display = DjStripeSubscriptionAdmin.list_display + (
         "has_metadata",
         {% if use_teams -%}
         "team_link",
         {% endif -%}
-    ]
+    )
 
     def has_metadata(self, obj):
         """Check if subscription has extended metadata."""
