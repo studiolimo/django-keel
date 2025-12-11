@@ -286,9 +286,10 @@ STORAGES["default"]["BACKEND"] = "storages.backends.azure_storage.AzureStorage"
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+SITE_ID = 1
+
 {% if auth_backend in ['allauth', 'both'] -%}
 # django-allauth
-SITE_ID = 1
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
