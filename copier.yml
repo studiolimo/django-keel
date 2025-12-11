@@ -198,7 +198,7 @@ media_storage:
     AWS S3: aws-s3
     Google Cloud Storage: gcp-gcs
     Azure Storage: azure-storage
-  default: "aws-s3"
+  default: "local-whitenoise"
 
 # Security
 security_profile:
@@ -273,7 +273,7 @@ license:
     GPL 3.0: GPL-3.0
     BSD 3-Clause: BSD-3-Clause
     Proprietary: Proprietary
-  default: "MIT"
+  default: "Proprietary"
 
 # Post-generation instructions are now provided in the template's README
 # instead of using _tasks to avoid the "unsafe feature" warning
