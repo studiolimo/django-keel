@@ -31,7 +31,7 @@ htmlcov/
 .ruff_cache/
 
 # MkDocs
-site/
+/site/
 
 # Copier
 .copier-answers.yml
