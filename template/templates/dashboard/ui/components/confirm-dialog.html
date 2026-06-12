@@ -1,0 +1,19 @@
+{# Dialog di conferma per azioni distruttive (Alpine store 'confirm') #}
+<div x-show="$store.confirm.open" x-cloak
+     x-trap.inert.noscroll="$store.confirm.open"
+     role="dialog" aria-modal="true"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-ink/40"
+     @keydown.escape.window="$store.confirm.cancel()">
+  <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl" @click.outside="$store.confirm.cancel()">
+    <p class="mb-5 text-sm" x-text="$store.confirm.message"></p>
+    <div class="flex justify-end gap-3">
+      <button type="button" class="rounded-md border border-line px-4 py-2 text-sm hover:bg-paper"
+              @click="$store.confirm.cancel()">Annulla</button>
+      <button type="button" class="rounded-md bg-danger px-4 py-2 text-sm text-white hover:opacity-90"
+              @click="$store.confirm.proceed()">Conferma</button>
+    </div>
+  </div>
+</div>
+
+{# Form nascosto usato dal dialog di conferma per azioni distruttive via POST #}
+<form id="confirm-form" method="POST" class="hidden">{% csrf_token %}</form>

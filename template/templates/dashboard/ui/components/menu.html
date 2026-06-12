@@ -1,0 +1,32 @@
+<ul class="space-y-1">
+  {% for item in menu_items %}
+    {% if item.children %}
+      <li x-data="{ open: {{ item.is_open|yesno:'true,false' }} }">
+        <button type="button" @click="open = !open"
+                class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-ink-soft hover:bg-paper">
+          {% if item.icon %}<i class="{{ item.icon }} text-base"></i>{% endif %}
+          <span class="flex-1 text-left">{{ item.title }}</span>
+          <i class="ri-arrow-down-s-line transition-transform" :class="open && 'rotate-180'"></i>
+        </button>
+        <ul x-show="open" x-collapse class="mt-1 space-y-1 pl-9">
+          {% for child in item.children %}
+            <li>
+              <a href="{{ child.url }}"
+                 class="block rounded-md px-3 py-1.5 text-sm {% if child.is_active %}bg-brand-soft font-medium text-ink{% else %}text-ink-soft hover:bg-paper{% endif %}">
+                {{ child.title }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </li>
+    {% else %}
+      <li>
+        <a href="{{ item.url }}"
+           class="flex items-center gap-2 rounded-md px-3 py-2 text-sm {% if item.is_active %}bg-brand-soft font-medium text-ink{% else %}text-ink-soft hover:bg-paper{% endif %}">
+          {% if item.icon %}<i class="{{ item.icon }} text-base"></i>{% endif %}
+          {{ item.title }}
+        </a>
+      </li>
+    {% endif %}
+  {% endfor %}
+</ul>

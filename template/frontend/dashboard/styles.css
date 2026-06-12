@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "../shared/tokens.css";
+
+@source "../../templates/dashboard";
+@source "../../templates/django_tables2";
+@source "../../templates/crispy_layout";
+@source "../../templates/tailwind";
+@source "../../apps/dashboard";
+
+[x-cloak] { display: none !important; }

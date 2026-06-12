@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>{% block title %}Dashboard{% endblock title %} | ri7ette</title>
+  <link rel="icon" type="image/png" sizes="96x96" href="{% static 'images/favicons/favicon-96x96.png' %}">
+  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicons/favicon.svg' %}">
+  <link rel="shortcut icon" href="{% static 'images/favicons/favicon.ico' %}">
+  <link rel="stylesheet" href="{% static 'fonts/remixicon.css' %}">
+  <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+  {% block extra_css %}{% endblock extra_css %}
+</head>
+<body class="bg-paper text-ink font-sans antialiased"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+      x-data="{ sidebarOpen: true }">
+
+<div class="flex min-h-screen">
+  {% block sidebar %}{% include "dashboard/ui/components/sidebar.html" %}{% endblock sidebar %}
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    {% block header %}{% include "dashboard/ui/components/topbar.html" %}{% endblock header %}
+
+    <main class="flex-1 px-6 py-5">
+      {% block pagetitle %}
+        {% include "dashboard/ui/components/page-title.html" with title=page_title subtitle=page_subtitle %}
+      {% endblock pagetitle %}
+      {% block messages %}{% include "dashboard/ui/components/messages.html" %}{% endblock messages %}
+      {% block content %}{% endblock content %}
+    </main>
+
+    <footer class="px-6 py-3 text-xs text-ink-faint">{% now "Y" %} © ri7ette</footer>
+  </div>
+</div>
+
+{% include "dashboard/ui/components/confirm-dialog.html" %}
+
+<script src="{% static 'dashboard/js/dashboard.js' %}" defer></script>
+{% block extra_js %}{% endblock extra_js %}
+</body>
+</html>

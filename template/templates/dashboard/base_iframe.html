@@ -1,0 +1,20 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Dashboard{% endblock title %} | ri7ette</title>
+  <link rel="stylesheet" href="{% static 'fonts/remixicon.css' %}">
+  <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+  {% block extra_css %}{% endblock extra_css %}
+</head>
+<body class="bg-paper text-ink font-sans antialiased p-4">
+  {% include "dashboard/ui/components/messages.html" %}
+  {% block content %}{% endblock content %}
+  {% include "dashboard/ui/components/confirm-dialog.html" %}
+
+  <script src="{% static 'dashboard/js/dashboard.js' %}" defer></script>
+  {% block extra_js %}{% endblock extra_js %}
+</body>
+</html>

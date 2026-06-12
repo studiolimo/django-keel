@@ -1,0 +1,18 @@
+/* Token brand ri7ette — condivisi tra i temi (dashboard, sito).
+   Fonte: palette "Vivace" dell'app Flutter. */
+@theme {
+  --color-brand: #bcd440;        /* primary */
+  --color-brand-edge: #8ca73d;   /* primaryEdge — hover/bordi */
+  --color-brand-soft: #eaf2c9;   /* primarySoft — sfondi attivi */
+  --color-ink: #20260a;          /* testo principale */
+  --color-ink-soft: #6b7544;     /* testo secondario */
+  --color-ink-faint: #9aa277;    /* placeholder/disabled */
+  --color-paper: #fffef8;        /* sfondo pagina */
+  --color-line: #e7e5d2;         /* bordi */
+  --color-line-strong: #d8d8be;
+  --color-danger: #be1e2d;
+  --color-danger-soft: #fbe4e0;
+  --color-warn: #e2b923;
+  --color-warn-soft: #faf1d2;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

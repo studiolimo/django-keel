@@ -1,0 +1,23 @@
+{% extends "dashboard/base.html" %}
+
+{% block title %}Conferma eliminazione{% endblock title %}
+
+{% block content %}
+  <div class="mx-auto max-w-xl rounded-lg border border-line bg-white p-6">
+    <h2 class="mb-3 text-base font-semibold">Eliminare {{ object_list|length }} {{ objects_name }}?</h2>
+    <p class="mb-4 text-sm text-ink-soft">L'operazione non è reversibile. Elementi selezionati:</p>
+    <ul class="mb-5 max-h-60 list-inside list-disc space-y-1 overflow-y-auto text-sm">
+      {% for obj in object_list %}<li>{{ obj }}</li>{% endfor %}
+    </ul>
+    <form method="POST">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="{{ action }}">
+      <input type="hidden" name="post" value="yes">
+      {% for obj in object_list %}<input type="hidden" name="selection" value="{{ obj.pk }}">{% endfor %}
+      <div class="flex justify-end gap-3">
+        <a href="{{ cancel_url }}" class="rounded-md border border-line px-4 py-2 text-sm hover:bg-paper">Annulla</a>
+        <button type="submit" class="rounded-md bg-danger px-4 py-2 text-sm text-white hover:opacity-90">Elimina</button>
+      </div>
+    </form>
+  </div>
+{% endblock content %}

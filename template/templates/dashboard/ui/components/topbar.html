@@ -1,0 +1,28 @@
+<header id="topbar" class="flex h-14 items-center gap-3 border-b border-line bg-white px-4">
+  <button type="button" class="rounded-md p-2 text-ink-soft hover:bg-paper" title="Mostra/nascondi menu"
+          aria-label="Mostra/nascondi menu" :aria-expanded="sidebarOpen"
+          @click="sidebarOpen = !sidebarOpen">
+    <i class="ri-menu-line text-lg" aria-hidden="true"></i>
+  </button>
+  <div class="flex-1"></div>
+  <div x-data="{ open: false }" class="relative">
+    <button type="button" class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-paper"
+            aria-haspopup="true" :aria-expanded="open"
+            @click="open = !open">
+      <span class="flex size-7 items-center justify-center rounded-full bg-brand-soft text-xs font-semibold uppercase">
+        {{ request.user.email|first }}
+      </span>
+      <span class="hidden sm:block">{{ request.user.get_full_name|default:request.user.username|default:"Staff" }}</span>
+      <i class="ri-arrow-down-s-line" aria-hidden="true"></i>
+    </button>
+    <div x-show="open" x-cloak @click.outside="open = false"
+         class="absolute right-0 z-40 mt-1 w-44 rounded-md border border-line bg-white py-1 shadow-lg">
+      <form method="post" action="{% url 'admin:logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="flex w-full items-center gap-2 px-3 py-2 text-sm text-ink-soft hover:bg-paper">
+          <i class="ri-logout-box-r-line"></i> Esci
+        </button>
+      </form>
+    </div>
+  </div>
+</header>

@@ -1,0 +1,67 @@
+{% extends IS_IFRAME|yesno:"dashboard/base_iframe.html,dashboard/base.html" %}
+{% load crispy_forms_tags %}
+{% load render_table from django_tables2 %}
+
+{% block title %}{{ page_title }}{% endblock title %}
+
+{% block content %}
+  {% block filters %}
+    {% if filter.form and not request.GET.hf %}
+      <div class="mb-4 rounded-lg border border-line bg-white">
+        <div class="border-b border-line px-4 py-3 text-sm font-medium">Filtri</div>
+        <form action="" method="GET" class="p-4">
+          {% crispy filter.form filter.form.helper %}
+        </form>
+      </div>
+    {% endif %}
+  {% endblock filters %}
+
+  <form action="" method="POST" id="formListId">
+    {% csrf_token %}
+    <div x-data="tableSelection({{ table.paginator.count|default:object_list.count }})">
+
+      <div class="mb-3 flex items-center gap-3">
+        {% if actions %}
+          <select name="action" required autocomplete="off" @change="selectedAction = $el.value"
+                  class="rounded-md border border-line bg-white px-3 py-1.5 text-sm" aria-label="Azione sui selezionati">
+            <option value="" selected>— Azione —</option>
+            {% for action in actions %}
+              <option value="{{ action.fn }}">{{ action.description }}</option>
+            {% endfor %}
+          </select>
+          <input type="hidden" name="select_across" :value="selectAcross">
+          <button type="submit" name="index"
+                  class="rounded-md bg-brand px-4 py-1.5 text-sm font-medium text-ink hover:bg-brand-edge disabled:opacity-40"
+                  :disabled="numSelected == 0 || selectedAction == ''">Esegui</button>
+          <span class="text-sm text-ink-faint">
+            <span x-text="numSelected">0</span> selezionati
+          </span>
+          {% if table.page and table.paginator.num_pages > 1 %}
+            <button type="button" class="text-sm text-brand-edge underline" x-cloak
+                    x-show="selectAll && !selectAcross" @click="extendToAll()">
+              Seleziona tutti i {{ table.paginator.count }} elementi
+            </button>
+            <button type="button" class="text-sm text-brand-edge underline" x-cloak
+                    x-show="selectAcross" @click="clearSelection()">Annulla selezione</button>
+          {% endif %}
+        {% endif %}
+
+        {% block buttons %}
+          <div class="ms-auto flex gap-2">
+            {% for button in buttons %}
+              <a href="{% url button.url %}"
+                 class="rounded-md bg-brand px-4 py-1.5 text-sm font-medium text-ink hover:bg-brand-edge">
+                <i class="ri-add-line me-1" aria-hidden="true"></i>{{ button.name }}</a>
+            {% endfor %}
+          </div>
+        {% endblock buttons %}
+      </div>
+
+      {% block inner_content %}
+        <div class="rounded-lg border border-line bg-white">
+          {% block card_body %}{% render_table table %}{% endblock card_body %}
+        </div>
+      {% endblock inner_content %}
+    </div>
+  </form>
+{% endblock content %}

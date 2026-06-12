@@ -1,0 +1,15 @@
+<div id="dj-messages" class="mb-4 space-y-2">
+  {% for message in messages %}
+    <div x-data="{ show: true }" x-show="show"
+         class="flex items-start gap-2 rounded-md border px-4 py-3 text-sm
+                {% if message.tags == 'error' %}border-danger bg-danger-soft text-danger
+                {% elif message.tags == 'warning' %}border-warn bg-warn-soft text-ink
+                {% else %}border-brand-edge bg-brand-soft text-ink{% endif %}">
+      <div class="flex-1">{{ message|safe }}</div>
+      <button type="button" class="opacity-60 hover:opacity-100" @click="show = false"
+              title="Chiudi" aria-label="Chiudi messaggio">
+        <i class="ri-close-line" aria-hidden="true"></i>
+      </button>
+    </div>
+  {% endfor %}
+</div>
