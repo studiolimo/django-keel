@@ -18,4 +18,4 @@ def staff_client(client, admin_user):
 
 @pytest.fixture
 def normal_user(db):
-    return User.objects.create_user(email="utente@ri7ette.it", password=TEST_PASSWORD)
+    return User.objects.create_user(email="utente@example.com", password=TEST_PASSWORD)

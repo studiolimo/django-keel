@@ -122,7 +122,7 @@ ignore = [
 "config/settings/*.py" = ["F405", "F403"]  # allow star imports in settings
 
 [tool.ruff.lint.isort]
-known-first-party = ["elio_backend", "apps", "config"]
+known-first-party = ["apps", "config"]
 section-order = [
     "future",
     "standard-library",
@@ -167,7 +167,7 @@ ignore_missing_imports = true
 django_settings_module = "config.settings.local"
 
 [tool.coverage.run]
-source = ["elio_backend"]
+source = ["apps", "config"]
 omit = [
     "*/migrations/*",
     "*/tests/*",
