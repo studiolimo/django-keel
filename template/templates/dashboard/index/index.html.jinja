@@ -1,3 +1,4 @@
+{% raw %}
 {% extends "dashboard/base.html" %}
 
 {% block title %}Dashboard{% endblock title %}
@@ -10,8 +11,9 @@
   <div class="rounded-lg border border-line bg-white p-6">
     <h2 class="mb-1 text-base font-semibold">Ciao, {{ request.user.first_name|default:request.user.email }}!</h2>
     <p class="text-sm text-ink-soft">
-      Benvenuto nella dashboard di amministrazione di ri7ette.
+      Benvenuto nella dashboard di amministrazione di {% endraw %}{{ project_name }}{% raw %}.
       Usa il menu a sinistra per gestire i contenuti.
     </p>
   </div>
 {% endblock content %}
+{% endraw %}

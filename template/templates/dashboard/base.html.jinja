@@ -1,3 +1,4 @@
+{% raw %}
 {% load static %}
 <!DOCTYPE html>
 <html lang="it">
@@ -5,10 +6,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex">
-  <title>{% block title %}Dashboard{% endblock title %} | ri7ette</title>
-  <link rel="icon" type="image/png" sizes="96x96" href="{% static 'images/favicons/favicon-96x96.png' %}">
-  <link rel="icon" type="image/svg+xml" href="{% static 'images/favicons/favicon.svg' %}">
-  <link rel="shortcut icon" href="{% static 'images/favicons/favicon.ico' %}">
+  <title>{% block title %}Dashboard{% endblock title %} | {% endraw %}{{ project_name }}{% raw %}</title>
+  {# Favicon: aggiungi qui i link quando il progetto ha i suoi asset in static/images/ #}
   <link rel="stylesheet" href="{% static 'fonts/remixicon.css' %}">
   <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
   {% block extra_css %}{% endblock extra_css %}
@@ -31,7 +30,7 @@
       {% block content %}{% endblock content %}
     </main>
 
-    <footer class="px-6 py-3 text-xs text-ink-faint">{% now "Y" %} © ri7ette</footer>
+    <footer class="px-6 py-3 text-xs text-ink-faint">{% now "Y" %} © {% endraw %}{{ project_name }}{% raw %}</footer>
   </div>
 </div>
 
@@ -41,3 +40,4 @@
 {% block extra_js %}{% endblock extra_js %}
 </body>
 </html>
+{% endraw %}
