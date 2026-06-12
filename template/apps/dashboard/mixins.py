@@ -36,7 +36,7 @@ from apps.dashboard.crispy_layout import Card
 from apps.dashboard.forms import DashboardFormHelper
 from apps.history.models import ObjectHistory
 
-log = logging.getLogger("ri7ette")
+log = logging.getLogger(__name__)
 
 
 class HistoryMixin(DirtyFieldsMixin, models.Model):
@@ -70,20 +70,6 @@ class SuperuserPermissionMixin(LoginRequiredMixin):
             # Stesso motivo di DashboardPermissionMixin: redirect esplicito invece di PermissionDenied.
             return redirect_to_login(request.get_full_path(), str(self.login_url))
         return super().dispatch(request, *args, **kwargs)
-
-
-# to protect the select2 autocomplete url
-class SuperuserSelect2WidgetMixin:
-    def __init__(self, *args, **kwargs):
-        kwargs['data_view'] = 'dashboard:select2'
-        super().__init__(*args, **kwargs)
-
-    def get_context(self, name, value, attrs):
-        context = super().get_context(name, value, attrs)
-        context["widget"]["attrs"]["data-minimum-input-length"] = 0
-        # context["widget"]["attrs"]["data-width"] = 200
-        # context["widget"]["attrs"]["data-close-on-select"] = "false"
-        return context
 
 
 class ListViewMixin(SingleTableMixin, ExportMixin, FilterView):

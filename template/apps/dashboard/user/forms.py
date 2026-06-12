@@ -13,9 +13,8 @@ class UserFilterFormHelper(DashboardFormHelper):
     layout = Layout(
         Row(
             Column(Field("q")),
-            Column(Field("membership")),
             Column(Field("email_verified")),
-            css_class="grid gap-4 sm:grid-cols-3",
+            css_class="grid gap-4 sm:grid-cols-2",
         ),
         Submit("submit", "Applica filtri", css_class="mt-3"),
     )
@@ -26,7 +25,7 @@ class UserFilter(django_filters.FilterSet):
 
     class Meta:
         model = User
-        fields = ["membership", "email_verified"]
+        fields = ["email_verified"]
 
     def filtra_testo(self, queryset, name, value):  # noqa: ARG002
         return queryset.filter(
@@ -43,7 +42,7 @@ class UserUpdateForm(CreateUpdateFormMixin):
         fields = [
             "email", "username", "first_name", "last_name",
             "email_verified", "profile_complete", "marketing_consent",
-            "force_premium", "is_active",
+            "is_active",
         ]
 
     def __init__(self, *args, **kwargs):
@@ -60,7 +59,7 @@ class UserUpdateForm(CreateUpdateFormMixin):
             ),
             Card(
                 "email_verified", "profile_complete", "marketing_consent",
-                "force_premium", "is_active",
+                "is_active",
                 title="Stato account",
             ),
         )

@@ -39,10 +39,6 @@ class TestUserList:
         assert response.status_code == 200
         assert "spreadsheet" in response["Content-Type"]
 
-    def test_filtro_per_membership(self, staff_client, altro_utente):
-        response = staff_client.get(reverse("dashboard:user_list"), {"membership": "free"})
-        assert "mario@example.com" in response.content.decode()
-
     def test_azione_non_dichiarata_ignorata(self, staff_client, altro_utente):
         # action_delete_objects esiste sui mixin ma NON è dichiarata in actions:
         # il POST forgiato non deve eliminare nulla.
