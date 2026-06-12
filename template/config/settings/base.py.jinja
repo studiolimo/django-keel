@@ -7,8 +7,6 @@ from pathlib import Path
 
 import environ
 from corsheaders.defaults import default_headers
-from django.templatetags.static import static
-from django.urls import reverse_lazy
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -36,10 +34,6 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=[])
 # Application definition
 DJANGO_APPS = [
     "modeltranslation",
-    "unfold",  # before django.contrib.admin
-    "unfold.contrib.filters",  # optional, if special filters are needed
-    "unfold.contrib.forms",  # optional, if special form elements are needed
-    "unfold.contrib.inlines",  # optional, if special inlines are needed
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -350,55 +344,9 @@ CORS_ALLOW_HEADERS = (
 )
 CORS_ALLOW_CREDENTIALS = True
 
-UNFOLD = {
-    "SITE_TITLE": "{{ project_name }} Admin",
-    "SITE_HEADER": "{{ project_name }} Admin",
-    "SITE_ICON": {
-        "light": lambda _request: static("images/logo-dark.png"),  # light mode
-        "dark": lambda _request: static("images/logo-light.png"),  # dark mode
-    },
-    # "SITE_LOGO": lambda request: static("logo.svg"),  # both modes, optimise for 32px height
-    "SITE_LOGO": {
-        "light": lambda _request: static("images/logo-dark.png"),  # light mode
-        "dark": lambda _request: static("images/logo-light.png"),  # dark mode
-    },
-    "STYLES": [
-        lambda _request: static("css/admin.css"),
-    ],
-    "DASHBOARD_CALLBACK": "apps.core.admin_dashboard.dashboard_callback",
-    "SHOW_HISTORY": False,
-    "SHOW_VIEW_ON_SITE": False,
-    "COLORS": {
-        "primary": {"600": "#93ac2b"},
-    },
-    "SIDEBAR": {
-        "show_search": True,  # Search in applica
-        "show_all_applications": True,
-        "navigation": [
-            {
-                "title": "Navigation",
-                "separator": True,  # Top border
-                "collapsible": False,  # Collapsible group of links
-                "items": [
-                    {
-                        "title": "Dashboard",
-                        "icon": "dashboard",  # Supported icon set: https://fonts.google.com/icons
-                        "link": reverse_lazy("admin:index"),
-                        "permission": lambda request: request.user.is_superuser,
-                    },
-                    {
-                        "title": "Utenti",
-                        "icon": "people",
-                        "link": reverse_lazy("admin:users_user_changelist"),
-                    }
-                ],
-            },
-        ],
-    },
-}
 
-CRISPY_TEMPLATE_PACK = "unfold_crispy"
-CRISPY_ALLOWED_TEMPLATE_PACKS = ["unfold_crispy", "tailwind"]
+CRISPY_TEMPLATE_PACK = "tailwind"
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["tailwind"]
 
 # Template di default per le tabelle django-tables2 (dashboard)
 DJANGO_TABLES2_TEMPLATE = "django_tables2/tailwind.html"

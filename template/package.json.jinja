@@ -3,8 +3,6 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "tailwind:build": "npx @tailwindcss/cli -i tailwind/styles.css -o static/css/admin.css --minify",
-    "tailwind:watch": "npx @tailwindcss/cli -i tailwind/styles.css -o static/css/admin.css --watch",
     "dashboard:css": "npx @tailwindcss/cli -i frontend/dashboard/styles.css -o static/dashboard/css/dashboard.css --minify",
     "dashboard:js": "esbuild frontend/dashboard/js/dashboard.js --bundle --minify --outfile=static/dashboard/js/dashboard.js",
     "dashboard:fonts": "mkdir -p static/fonts && cp node_modules/remixicon/fonts/remixicon.css node_modules/remixicon/fonts/remixicon.woff2 static/fonts/",
