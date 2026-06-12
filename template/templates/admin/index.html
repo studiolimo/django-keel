@@ -1,0 +1,68 @@
+{% extends 'admin/base.html' %}
+{% load unfold %}
+{% load i18n %}
+
+{% block title %}
+    {% if subtitle %}{{ subtitle }} | {% endif %}
+    {{ title }} | {{ site_title|default:_('Django site admin') }}
+{% endblock %}
+
+{% block branding %}
+    {% include "unfold/helpers/site_branding.html" %}
+{% endblock %}
+
+{% block content %}
+
+    {# ── HEADER ── #}
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Panoramica generale della piattaforma</p>
+        </div>
+    </div>
+
+    {# ── KPI CARDS ── #}
+    <div class="grid grid-cols-2 gap-4 mb-6 lg:grid-cols-4">
+
+        {% for card in kpi_cards %}
+            <div class="relative overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+                <div class="flex items-start justify-between">
+                    <div class="min-w-0">
+                        <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400 truncate">
+                            {{ card.label }}
+                        </p>
+                        <p class="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white leading-none">
+                            {% if card.type == "currency" %}
+                                € {{ card.value|floatformat:2 }}
+                            {% else %}
+                                {{ card.value }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0 rounded-lg p-2
+                {% if card.id == 'bookings_today' %}bg-blue-50 dark:bg-blue-900/30
+                {% elif card.id == 'revenue_netto' %}bg-green-50 dark:bg-green-900/30
+                {% elif card.id == 'pipeline' %}bg-orange-50 dark:bg-orange-900/30
+                {% else %}bg-purple-50 dark:bg-purple-900/30{% endif %}">
+                <span class="material-symbols-outlined text-xl
+                    {% if card.id == 'bookings_today' %}text-blue-600 dark:text-blue-400
+                    {% elif card.id == 'revenue_netto' %}text-green-600 dark:text-green-400
+                    {% elif card.id == 'pipeline' %}text-orange-600 dark:text-orange-400
+                    {% else %}text-purple-600 dark:text-purple-400{% endif %}">
+                    {{ card.icon }}
+                </span>
+                    </div>
+                </div>
+
+                {# Accent bar in basso #}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5
+            {% if card.id == 'bookings_today' %}bg-blue-500
+            {% elif card.id == 'revenue_netto' %}bg-green-500
+            {% elif card.id == 'pipeline' %}bg-orange-500
+            {% else %}bg-purple-500{% endif %}">
+                </div>
+            </div>
+        {% endfor %}
+
+    </div>
+{% endblock %}

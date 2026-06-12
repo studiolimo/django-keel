@@ -1,0 +1,96 @@
+# {{ project_name }} Backend
+
+Documentazione tecnica del backend {{ project_name }}.
+
+## Stack
+
+### Core
+
+- **Django 5.2** + Python 3.14
+- **Package management**: uv
+- **Database**: PostgreSQL + Redis (cache + Celery broker)
+- **Auth**: JWT con djangorestframework-simplejwt (access 15min, refresh 30gg, rotate=True)
+
+### API
+
+- **Framework**: Django REST Framework
+- **Documentazione OpenAPI**: drf-spectacular → `/api/docs/`
+
+### Task asincroni
+
+- **Worker**: Celery + Redis
+- **Scheduler**: django-celery-beat
+
+### Pagamenti
+
+- **Stripe**: pre-autorizzazione con capture manuale
+
+### Deploy
+
+- **Infrastruttura**: VPS OVH con Docker Compose + Traefik v3.3
+- **CI/CD**: GitHub Actions → GHCR → SSH deploy
+
+### Qualità del codice
+
+- **Linting/Formatting**: Ruff (line-length=100)
+- **Type checking**: mypy + django-stubs
+- **Testing**: pytest + pytest-django + model-bakery
+
+---
+
+## Quick Start
+
+```bash
+# Clona il repository
+git clone git@github.com:{{ git_repository_org_name }}/{{ git_repository_project_slug }}.git
+cd {{ git_repository_project_slug }}
+
+# Installa le dipendenze
+just install
+
+# Copia e configura le variabili d'ambiente
+cp .env.example .env
+# Modifica .env con i tuoi valori
+
+# Avvia i servizi locali (PostgreSQL, Redis, Mailpit)
+docker compose up -d
+
+# Esegui le migrazioni
+just migrate
+
+# Crea il superuser
+just createsuperuser
+
+# Avvia il server di sviluppo
+just dev
+```
+
+## URL locali
+
+Dopo aver avviato il server:
+
+| Servizio                | URL                             |
+|-------------------------|---------------------------------|
+| Applicazione            | http://localhost:8000           |
+| Admin Django            | http://localhost:8000/admin/    |
+| API Docs (Swagger)      | http://localhost:8000/api/docs/ |
+| Email testing (Mailpit) | http://localhost:8025           |
+
+---
+
+## Comandi principali
+
+```bash
+just dev              # Server sviluppo
+just test             # pytest
+just test-cov         # pytest + coverage HTML
+just lint             # ruff check
+just format           # ruff format
+just typecheck        # mypy
+just check            # lint + typecheck + test (tutto)
+just makemigrations   # genera migrazioni
+just migrate          # applica migrazioni
+just shell            # django shell_plus
+just docs-serve       # serve questa documentazione in locale
+just docs-build       # build statica della documentazione
+```

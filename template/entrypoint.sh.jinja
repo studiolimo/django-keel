@@ -1,0 +1,19 @@
+#!/bin/sh
+set -e
+
+# Run Django setup steps only for the web server, not for celery workers
+case "$1" in
+  celery|uv)
+    exec "$@"
+    ;;
+  *)
+    echo "Running collectstatic..."
+    uv run python manage.py collectstatic --noinput
+
+    echo "Running migrations..."
+    uv run python manage.py migrate --noinput
+
+    echo "Starting gunicorn..."
+    exec uv run gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2
+    ;;
+esac

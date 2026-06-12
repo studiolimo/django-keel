@@ -1,0 +1,49 @@
+# docker-compose.traefik.yml
+# Avviato UNA VOLTA sul VPS. Non viene toccato dai deploy.
+# Avvio: docker compose -f docker-compose.traefik.yml --env-file .env.prod up -d
+
+services:
+  # Proxy sicuro per il socket Docker (evita di esporre il socket diretto a Traefik)
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+      NETWORKS: 1
+    networks:
+      - socket_proxy
+
+  traefik:
+    image: traefik:v3
+    container_name: traefik
+    restart: unless-stopped
+    depends_on:
+      - socket-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/acme.json:/acme.json
+    networks:
+      - traefik_public
+      - socket_proxy
+    labels:
+      - "traefik.enable=true"
+      # Dashboard
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`traefik.{{ project_domain_url }}`)"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.middlewares=traefik-auth"
+      # Basic auth per la dashboard (genera con: htpasswd -nb admin password)
+      - "traefik.http.middlewares.traefik-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+
+networks:
+  traefik_public:
+    name: traefik_public
+    driver: bridge
+  socket_proxy:
+    internal: true

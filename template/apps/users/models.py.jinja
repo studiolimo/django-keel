@@ -1,10 +1,15 @@
 """User models."""
+
+import datetime
+from typing import ClassVar
+
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 
-class UserManager(BaseUserManager):
+class UserManager(BaseUserManager["User"]):
     """Custom user manager."""
 
     def create_user(self, email, password=None, **extra_fields):
@@ -13,7 +18,7 @@ class UserManager(BaseUserManager):
             raise ValueError(_("The Email field must be set"))
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        user.set_password(password)  # type: ignore[attr-defined]
         user.save(using=self._db)
         return user
 
@@ -23,24 +28,44 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
 
-        if extra_fields.get("is_staff") is not True:
+        if not extra_fields.get("is_staff"):
             raise ValueError(_("Superuser must have is_staff=True."))
-        if extra_fields.get("is_superuser") is not True:
+        if not extra_fields.get("is_superuser"):
             raise ValueError(_("Superuser must have is_superuser=True."))
 
         return self.create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
-    """Custom user model."""
-
-    username = None
-    email = models.EmailField(_("email address"), unique=True)
-
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
-    objects = UserManager()
+    username = models.CharField(  # type: ignore[assignment]
+        _("username"),
+        max_length=150,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text=_("Optional. 150 characters or fewer."),
+    )
+    email = models.EmailField(_("email address"), unique=True)
+
+    """Campi comuni per il profilo utente"""
+    first_name = models.CharField(max_length=256, blank=True)
+    last_name = models.CharField(max_length=256, blank=True)
+
+    avatar = models.ImageField(blank=True, null=True, upload_to="avatars")
+
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    marketing_consent = models.BooleanField(default=False)
+    marketing_consent_at = models.DateTimeField(null=True, blank=True)
+
+    email_verified = models.BooleanField(default=False)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+    profile_complete = models.BooleanField(default=False)
+    avatar_preset = models.CharField(max_length=50, blank=True)
+
+    objects: ClassVar[UserManager] = UserManager()  # type: ignore[assignment]
 
     class Meta:
         verbose_name = _("user")
@@ -48,3 +73,23 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def terms_up_to_date(self) -> bool:
+        """True if user accepted T&C after the most recently published LegalDocument.
+
+        Checks the latest effective_date across ALL document types. If terms_accepted_at
+        is null or predates the latest document, returns False.
+        No LegalDocument records means no acceptance required → returns True.
+        """
+        from apps.account.models import LegalDocument
+
+        if self.terms_accepted_at is None:
+            return False
+        latest = LegalDocument.objects.order_by("-effective_date").first()
+        if latest is None:
+            return True
+        latest_dt = timezone.make_aware(
+            datetime.datetime.combine(latest.effective_date, datetime.time.min)
+        )
+        return self.terms_accepted_at >= latest_dt

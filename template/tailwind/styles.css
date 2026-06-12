@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@custom-variant dark (.dark &);
+
+@source "../templates/admin";
+@source "../apps";

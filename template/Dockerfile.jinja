@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM python:{{ python_version }}-slim as base
+FROM python:3.14-slim as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -7,8 +7,8 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Create app user
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create app user with home directory so uv cache works at runtime
+RUN groupadd -r appuser && useradd -r -m -g appuser appuser
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,7 +23,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash 
 
 WORKDIR /app
 
-{% if dependency_manager == 'uv' -%}
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -42,46 +41,15 @@ RUN uv sync --no-dev
 # Copy rest of application
 COPY . .
 
-{% else -%}
-# Install poetry
-RUN pip install poetry==1.7.0
+# Ensure media directory exists with correct ownership
+RUN mkdir -p /app/media
 
-# Copy dependency files and README (required by hatchling)
-COPY pyproject.toml ./
-COPY poetry.lock* ./
-COPY README.md ./
-
-# Copy package directories needed for editable install
-COPY apps/ ./apps/
-COPY config/ ./config/
-
-# Install dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev --no-interaction --no-ansi
-
-# Copy rest of application
-COPY . .
-{% endif -%}
-
-# Change ownership
-RUN chown -R appuser:appuser /app
+# Change ownership and make entrypoint executable
+RUN chown -R appuser:appuser /app && chmod +x /app/entrypoint.sh
 
 USER appuser
 
 # Expose port
 EXPOSE 8000
 
-# Run application
-{% if use_channels -%}
-{% if dependency_manager == 'uv' -%}
-CMD ["uv", "run", "daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
-{% else -%}
-CMD ["daphne", "-b", "0.0.0.0", "-p", "8000", "config.asgi:application"]
-{% endif -%}
-{% else -%}
-{% if dependency_manager == 'uv' -%}
-CMD ["uv", "run", "gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]
-{% else -%}
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]
-{% endif -%}
-{% endif -%}
+ENTRYPOINT ["/app/entrypoint.sh"]

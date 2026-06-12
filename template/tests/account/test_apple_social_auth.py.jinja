@@ -1,0 +1,61 @@
+"""Tests for Apple token verification."""
+
+from unittest.mock import MagicMock, patch
+
+import pytest
+from rest_framework.exceptions import AuthenticationFailed
+
+from apps.account.social_auth import verify_apple_token
+
+VALID_PAYLOAD = {
+    "iss": "https://appleid.apple.com",
+    "aud": "app.{{ project_domain_url }}",
+    "sub": "apple_user_123",
+    "email": "user@privaterelay.appleid.com",
+    "email_verified": True,
+    "is_private_email": True,
+}
+
+
+@pytest.fixture
+def mock_jwks_client():
+    signing_key = MagicMock()
+    signing_key.key = "fake-rsa-key"
+    client = MagicMock()
+    client.get_signing_key_from_jwt.return_value = signing_key
+    return client
+
+
+@patch("apps.account.social_auth.PyJWKClient")
+@patch("apps.account.social_auth.jwt.decode")
+def test_verify_apple_token_returns_user_info(mock_decode, mock_client_cls, mock_jwks_client):
+    mock_client_cls.return_value = mock_jwks_client
+    mock_decode.return_value = VALID_PAYLOAD
+
+    result = verify_apple_token("fake.jwt.token")
+
+    assert result["uid"] == "apple_user_123"
+    assert result["email"] == "user@privaterelay.appleid.com"
+    assert result["extra_data"]["email_verified"] is True
+    assert result["extra_data"]["is_private_email"] is True
+
+
+@patch("apps.account.social_auth.PyJWKClient")
+@patch("apps.account.social_auth.jwt.decode")
+def test_verify_apple_token_raises_on_invalid_token(mock_decode, mock_client_cls, mock_jwks_client):
+    mock_client_cls.return_value = mock_jwks_client
+    mock_decode.side_effect = Exception("Invalid token")
+
+    with pytest.raises(AuthenticationFailed):
+        verify_apple_token("bad.token")
+
+
+@patch("apps.account.social_auth.PyJWKClient")
+@patch("apps.account.social_auth.jwt.decode")
+def test_verify_apple_token_raises_if_no_email(mock_decode, mock_client_cls, mock_jwks_client):
+    mock_client_cls.return_value = mock_jwks_client
+    payload_no_email = {**VALID_PAYLOAD, "email": ""}
+    mock_decode.return_value = payload_no_email
+
+    with pytest.raises(AuthenticationFailed, match="Email not provided"):
+        verify_apple_token("fake.jwt.token")

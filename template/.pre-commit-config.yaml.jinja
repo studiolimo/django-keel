@@ -3,7 +3,9 @@ repos:
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
+        exclude: '^static/'
       - id: end-of-file-fixer
+        exclude: '^static/'
       - id: check-yaml
       - id: check-added-large-files
       - id: check-json
@@ -12,18 +14,25 @@ repos:
       - id: debug-statements
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.0
+    rev: v0.14.8
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
+        args: [ --fix, --exit-non-zero-on-fix ]
       - id: ruff-format
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.10.0
+  - repo: local
     hooks:
+      - id: tailwind-build
+        name: Tailwind CSS build
+        entry: bash -c 'npm run tailwind:build && printf "\n" >> static/css/admin.css && git add static/css/admin.css'
+        language: system
+        files: '^(templates/|apps/.*admin.*\.py|tailwind/)'
+        pass_filenames: false
+
       - id: mypy
-        additional_dependencies:
-          - django-stubs
-{%- if api_style in ['drf', 'both'] %}
-          - djangorestframework-stubs
-{%- endif %}
+        name: mypy
+        entry: .venv/bin/mypy
+        language: system
+        types: [ python ]
+        pass_filenames: false
+        args: [ --config-file, pyproject.toml, . ]

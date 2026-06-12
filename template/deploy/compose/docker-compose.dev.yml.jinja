@@ -1,0 +1,111 @@
+# docker-compose.dev.yml
+# Deploy dev — branch: development
+# Avvio: docker compose -f docker-compose.dev.yml up -d
+
+name: elio_dev
+
+services:
+  frontend:
+    image: ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:dev
+    restart: unless-stopped
+    networks:
+      - traefik_public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend-{{ project_slug }}-dev.rule=Host(`dev.{{ project_domain_url }}`)"
+      - "traefik.http.routers.frontend-{{ project_slug }}-dev.entrypoints=websecure"
+      - "traefik.http.routers.frontend-{{ project_slug }}-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend-{{ project_slug }}-dev.loadbalancer.server.port=80"
+
+  backend:
+    image: ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:dev
+    restart: unless-stopped
+    env_file: .env.dev
+    volumes:
+      - media_dev:/app/media
+    networks:
+      - traefik_public
+      - internal_dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend-{{ project_slug }}-dev.rule=Host(`be-dev.{{ project_domain_url }}`)"
+      - "traefik.http.routers.backend-{{ project_slug }}-dev.entrypoints=websecure"
+      - "traefik.http.routers.backend-{{ project_slug }}-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.backend-{{ project_slug }}-dev.loadbalancer.server.port=8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  nginx-media:
+    image: nginx:alpine
+    restart: unless-stopped
+    volumes:
+      - media_dev:/app/media:ro
+      - ./nginx/nginx-media.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - traefik_public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.media-{{ project_slug }}-dev.rule=Host(`be-dev.{{ project_domain_url }}`) && PathPrefix(`/media/`)"
+      - "traefik.http.routers.media-{{ project_slug }}-dev.entrypoints=websecure"
+      - "traefik.http.routers.media-{{ project_slug }}-dev.tls.certresolver=letsencrypt"
+      - "traefik.http.services.media-{{ project_slug }}-dev.loadbalancer.server.port=80"
+
+  celery:
+    image: ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:dev
+    restart: unless-stopped
+    command: uv run celery -A config worker -l info --concurrency=1
+    env_file: .env.dev
+    networks:
+      - internal_dev
+    depends_on:
+      - backend
+
+  celerybeat:
+    image: ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:dev
+    restart: unless-stopped
+    command: uv run celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: .env.dev
+    networks:
+      - internal_dev
+    depends_on:
+      - backend
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file: .env.dev
+    volumes:
+      - postgres_dev:/var/lib/postgresql/data
+    networks:
+      - internal_dev
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_dev:/data
+    networks:
+      - internal_dev
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_dev:
+  redis_dev:
+  media_dev:
+
+networks:
+  traefik_public:
+    external: true
+  internal_dev:

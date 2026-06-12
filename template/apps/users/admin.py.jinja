@@ -1,23 +1,47 @@
 """User admin."""
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
+from unfold.admin import ModelAdmin
 
 from .models import User
 
 
 @admin.register(User)
-class UserAdmin(BaseUserAdmin):
+class UserAdmin(BaseUserAdmin, ModelAdmin):
     """Custom user admin."""
 
-    list_display = ["email", "first_name", "last_name", "is_staff", "is_active"]
-    list_filter = ["is_staff", "is_superuser", "is_active"]
+    list_display = [
+        "is_active",
+        "email",
+        "first_name",
+        "last_name",
+        "marketing_consent_display",
+        "email_verified",
+        "profile_complete",
+        "is_staff",
+    ]
+    list_filter = [
+        "is_staff",
+        "is_superuser",
+        "is_active",
+        "marketing_consent",
+    ]
     search_fields = ["email", "first_name", "last_name"]
     ordering = ["email"]
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
-        (_("Personal info"), {"fields": ("first_name", "last_name")}),
+        (
+            _("Personal info"),
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                )
+            },
+        ),
         (
             _("Permissions"),
             {
@@ -31,7 +55,28 @@ class UserAdmin(BaseUserAdmin):
             },
         ),
         (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+        (
+            _("Flags"),
+            {
+                "fields": (
+                    "email_verified",
+                    "profile_complete",
+                    "terms_accepted_at",
+                    "terms_up_to_date_display",
+                ),
+            },
+        ),
     )
+
+    readonly_fields = ("terms_up_to_date_display",)
+
+    @admin.display(description="T&C aggiornati?", boolean=True)
+    def terms_up_to_date_display(self, obj):
+        return obj.terms_up_to_date
+
+    @admin.display(description="Newsletter?", boolean=True, ordering="marketing_consent")
+    def marketing_consent_display(self, obj):
+        return obj.marketing_consent
 
     add_fieldsets = (
         (

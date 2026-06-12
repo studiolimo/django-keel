@@ -33,16 +33,13 @@ db.sqlite3-journal
 /static_root
 
 # Environment
+.env
 .envs
 .env.*
 !.env.example
-{% if dependency_manager == 'uv' -%}
+!.env.prod.example
+!.env.dev.example
 .venv/
-{% else -%}
-.venv/
-poetry.lock
-{% endif -%}
-
 # IDEs
 .vscode/
 .idea/
@@ -50,6 +47,8 @@ poetry.lock
 *.swo
 *~
 .DS_Store
+docs/plans/
+docs/superpowers/
 
 # Testing
 .coverage
@@ -64,21 +63,21 @@ htmlcov/
 dmypy.json
 
 # Documentation
-site/
+/site/
 docs/_build/
 
 # Docker
 .dockerignore
+
+# Traefik
+deploy/compose/traefik/acme.json
 
 # Temporary files
 *.bak
 *.tmp
 
 # Security
-{% if use_sops -%}
-secrets.*.yaml
-!secrets.*.enc.yaml
-{% endif %}
+files/
 
 # OS
 Thumbs.db
@@ -98,3 +97,6 @@ logs/
 # Database backups
 *.dump
 *.sql.gz
+
+node_modules
+.worktrees/
