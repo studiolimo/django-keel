@@ -8,3 +8,12 @@
 @source "../../apps/dashboard";
 
 [x-cloak] { display: none !important; }
+
+/* I campi form renderizzati da crispy-tailwind hanno classi (border-gray-300, ...)
+   definite dentro il pacchetto, non scansionate dalle @source: senza questa regola
+   il bordo cade sul default Tailwind 4 (currentColor → quasi nero). */
+@layer base {
+  input, select, textarea {
+    border-color: var(--color-line-strong);
+  }
+}
