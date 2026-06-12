@@ -1,18 +1,19 @@
-/* Token brand ri7ette — condivisi tra i temi (dashboard, sito).
-   Fonte: palette "Vivace" dell'app Flutter. */
+/* Token brand del progetto — condivisi tra i temi (dashboard, sito).
+   PERSONALIZZA QUI: sostituisci questa palette neutra con i colori del brand.
+   I nomi dei token sono usati dai template della dashboard: non rinominarli. */
 @theme {
-  --color-brand: #bcd440;        /* primary */
-  --color-brand-edge: #8ca73d;   /* primaryEdge — hover/bordi */
-  --color-brand-soft: #eaf2c9;   /* primarySoft — sfondi attivi */
-  --color-ink: #20260a;          /* testo principale */
-  --color-ink-soft: #6b7544;     /* testo secondario */
-  --color-ink-faint: #9aa277;    /* placeholder/disabled */
-  --color-paper: #fffef8;        /* sfondo pagina */
-  --color-line: #e7e5d2;         /* bordi */
-  --color-line-strong: #d8d8be;
-  --color-danger: #be1e2d;
-  --color-danger-soft: #fbe4e0;
-  --color-warn: #e2b923;
-  --color-warn-soft: #faf1d2;
+  --color-brand: #3b82f6;        /* azione primaria */
+  --color-brand-edge: #2563eb;   /* hover/bordi */
+  --color-brand-soft: #dbeafe;   /* sfondi attivi */
+  --color-ink: #1e293b;          /* testo principale */
+  --color-ink-soft: #475569;     /* testo secondario */
+  --color-ink-faint: #94a3b8;    /* placeholder/disabled */
+  --color-paper: #f8fafc;        /* sfondo pagina */
+  --color-line: #e2e8f0;         /* bordi */
+  --color-line-strong: #cbd5e1;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fee2e2;
+  --color-warn: #d97706;
+  --color-warn-soft: #fef3c7;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }

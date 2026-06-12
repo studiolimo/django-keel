@@ -1,0 +1,30 @@
+{
+  "name": "{{ project_slug }}-backend",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "tailwind:build": "npx @tailwindcss/cli -i tailwind/styles.css -o static/css/admin.css --minify",
+    "tailwind:watch": "npx @tailwindcss/cli -i tailwind/styles.css -o static/css/admin.css --watch",
+    "dashboard:css": "npx @tailwindcss/cli -i frontend/dashboard/styles.css -o static/dashboard/css/dashboard.css --minify",
+    "dashboard:js": "esbuild frontend/dashboard/js/dashboard.js --bundle --minify --outfile=static/dashboard/js/dashboard.js",
+    "dashboard:fonts": "mkdir -p static/fonts && cp node_modules/remixicon/fonts/remixicon.css node_modules/remixicon/fonts/remixicon.woff2 static/fonts/",
+    "dashboard:build": "npm run dashboard:css && npm run dashboard:js && npm run dashboard:fonts",
+    "dashboard:watch": "npx @tailwindcss/cli -i frontend/dashboard/styles.css -o static/dashboard/css/dashboard.css --watch",
+    "dashboard:watch:js": "esbuild frontend/dashboard/js/dashboard.js --bundle --outfile=static/dashboard/js/dashboard.js --watch",
+    "site:css": "npx @tailwindcss/cli -i frontend/site/styles.css -o static/site/css/site.css --minify",
+    "site:js": "esbuild frontend/site/js/site.js --bundle --minify --outfile=static/site/js/site.js",
+    "site:build": "npm run site:css && npm run site:js"
+  },
+  "dependencies": {
+    "@alpinejs/collapse": "^3.15.0",
+    "@alpinejs/focus": "^3.15.0",
+    "alpinejs": "^3.15.0",
+    "htmx.org": "^2.0.0",
+    "remixicon": "^4.5.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.0.0"
+  }
+}
