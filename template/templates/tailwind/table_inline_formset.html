@@ -1,0 +1,33 @@
+{% load crispy_forms_tags crispy_forms_utils crispy_forms_field %}
+{% specialspaceless %}
+{{ formset.management_form|crispy }}
+<table class="w-full text-sm">
+  {% if formset.forms %}
+  <thead>
+    <tr class="border-b border-line-strong text-left">
+      {% for field in formset.forms.0 %}
+        {% if field.label and not field.is_hidden %}
+          <th scope="col" class="px-2 py-2 font-medium text-ink-soft">
+            {{ field.label|safe }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+          </th>
+        {% endif %}
+      {% endfor %}
+    </tr>
+  </thead>
+  {% endif %}
+  <tbody>
+    {% for form in formset %}
+      {% if form.non_field_errors %}
+        <tr><td colspan="99" class="px-2 py-2 text-sm text-danger">{{ form.non_field_errors }}</td></tr>
+      {% endif %}
+      <tr class="border-b border-line align-top">
+        {% for field in form %}
+          {% if field.is_hidden %}{{ field }}{% else %}
+            <td class="px-2 py-2">{% crispy_field field %}{{ field.errors }}</td>
+          {% endif %}
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endspecialspaceless %}
