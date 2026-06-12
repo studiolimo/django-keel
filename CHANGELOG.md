@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Dashboard staff Tailwind inclusa in ogni progetto generato: shell (sidebar/topbar),
+  CRUD generico (django-tables2 + django-filter + crispy-tailwind), sezione Utenti
+  di esempio, app `history`, test pytest, build asset con Tailwind CLI + esbuild.
 
 #### Core Features
 - Copier-based Django project template with flexible configuration options

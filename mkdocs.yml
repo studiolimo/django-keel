@@ -48,6 +48,7 @@ nav:
       - Background Tasks: features/background-tasks.md
       - Frontend Options: features/frontend-options.md
       - Observability: features/observability.md
+      - Dashboard staff: features/dashboard.md
   - SaaS Features:
       - Overview: saas/overview.md
       - Teams & Organizations: saas/teams.md
