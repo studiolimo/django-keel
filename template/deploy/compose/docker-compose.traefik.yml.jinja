@@ -1,6 +1,6 @@
 # docker-compose.traefik.yml
 # Avviato UNA VOLTA sul VPS. Non viene toccato dai deploy.
-# Avvio: docker compose -f docker-compose.traefik.yml --env-file .env.prod up -d
+# Avvio: docker compose -f docker-compose.traefik.yml --env-file .env.traefik up -d
 
 services:
   # Proxy sicuro per il socket Docker (evita di esporre il socket diretto a Traefik)

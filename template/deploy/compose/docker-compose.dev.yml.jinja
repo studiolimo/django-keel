@@ -2,7 +2,11 @@
 # Deploy dev — branch: development
 # Avvio: docker compose -f docker-compose.dev.yml up -d
 
-name: elio_dev
+name: {{ project_slug }}_dev
+
+# DATABASE_URL derivata dai POSTGRES_* — unica fonte di verità per la password
+x-app-env: &app-env
+  DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
 
 services:
   frontend:
@@ -21,6 +25,7 @@ services:
     image: ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:dev
     restart: unless-stopped
     env_file: .env.dev
+    environment: *app-env
     volumes:
       - media_dev:/app/media
     networks:
@@ -58,6 +63,7 @@ services:
     restart: unless-stopped
     command: uv run celery -A config worker -l info --concurrency=1
     env_file: .env.dev
+    environment: *app-env
     networks:
       - internal_dev
     depends_on:
@@ -68,6 +74,7 @@ services:
     restart: unless-stopped
     command: uv run celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     env_file: .env.dev
+    environment: *app-env
     networks:
       - internal_dev
     depends_on:
