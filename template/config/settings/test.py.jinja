@@ -44,8 +44,5 @@ LOGGING = {
     },
 }
 
-# fix static files directories for tests
-STATIC_ROOT = BASE_DIR / "static"
-
 # Storage statici semplice nei test: il manifest di WhiteNoise richiederebbe collectstatic
 STORAGES["staticfiles"]["BACKEND"] = "django.contrib.staticfiles.storage.StaticFilesStorage"  # noqa: F405
