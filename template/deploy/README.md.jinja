@@ -1,0 +1,261 @@
+# Deploy {{ git_repository_project_slug }} — primo avvio sul server
+
+Runbook per la **prima** messa online del backend su un server Ubuntu. Gli stack
+`dev` e `prod` convivono sullo stesso server e condividono il proxy Traefik:
+prima si fa il [bootstrap una tantum](#bootstrap-una-tantum-condiviso), poi si
+sceglie il track [Deploy dev](#deploy-dev-be-dev{{ project_domain_url | replace(".", "") }}) o
+[Deploy prod](#deploy-prod-be{{ project_domain_url | replace(".", "") }}). Per gli aggiornamenti vedi
+[Deploy successivi](#deploy-successivi).
+
+## Architettura del deploy
+
+Tutto gira in Docker (in locale invece si usa `uv run`). Nella cartella
+`deploy/compose/` ci sono tre stack:
+
+- **Traefik** (`docker-compose.traefik.yml`) — reverse proxy + certificati
+  Let's Encrypt. Si avvia **una volta sola**, è condiviso da dev e prod e non
+  viene toccato dai deploy. Crea la rete esterna `traefik_public`.
+- **Dev** (`docker-compose.dev.yml` + `.env.dev`) — staging su `be-dev.{{ project_domain_url }}`,
+  immagine tag `:dev`.
+- **Prod** (`docker-compose.prod.yml` + `.env.prod`) — produzione su
+  `be.{{ project_domain_url }}`, immagine tag `:latest`.
+
+Ogni stack ha: `backend` (gunicorn), `postgres`, `redis`, `celery`,
+`celerybeat`, `nginx-media`, `frontend`. Le immagini si scaricano (`pull`) da
+`ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}`, buildate/pubblicate dalla CI
+(`.github/workflows/ci.yml`) al push su `development` (`:dev`) o `production`
+(`:latest`), oppure a mano.
+
+## Prerequisiti
+
+- Server Ubuntu con utente `django` e repo clonato in `/home/django/{{ git_repository_project_slug }}`.
+- Record DNS (A) verso l'IP del server:
+  - **dev**: `be-dev.{{ project_domain_url }}` (API) e `dev.{{ project_domain_url }}` (frontend)
+  - **prod**: `be.{{ project_domain_url }}` (API), `www.{{ project_domain_url }}` + `{{ project_domain_url }}` (frontend)
+  - `traefik.{{ project_domain_url }}` (dashboard Traefik)
+- I record che servono i certificati vanno in **"DNS only"** (nuvola grigia se usi
+  Cloudflare): la challenge TLS-ALPN di Let's Encrypt deve raggiungere il server
+  all'origine, e un proxy che termina il TLS la rompe.
+
+> Tutti i comandi vanno eseguiti sul server. Quelli di sistema (Docker, firewall)
+> richiedono `sudo`; il resto come utente `django` da `/home/django/{{ git_repository_project_slug }}`.
+
+---
+
+## Bootstrap una tantum (condiviso)
+
+Da fare **una sola volta**, vale sia per dev che per prod.
+
+### 1. Installa Docker Engine + plugin Compose
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+# Permetti all'utente django di usare Docker senza sudo
+sudo usermod -aG docker django
+```
+
+Esci e **riloggati** (o `newgrp docker`) perché il gruppo abbia effetto, poi verifica:
+
+```bash
+docker --version && docker compose version && docker run --rm hello-world
+```
+
+### 2. Firewall
+
+Apri le porte HTTP/HTTPS (necessarie a Traefik per la challenge ACME e per
+servire HTTPS):
+
+```bash
+sudo ufw allow 80/tcp && sudo ufw allow 443/tcp
+# non chiudere la porta SSH se usi ufw
+```
+
+### 3. Prepara gli env
+
+Traefik è un servizio **condiviso** e gli serve solo `TRAEFIK_DASHBOARD_AUTH`:
+tienilo in un env dedicato, così il proxy non dipende né da dev né da prod.
+
+```bash
+cd /home/django/{{ git_repository_project_slug }}/deploy/compose
+cp .env.traefik.example .env.traefik
+# poi metti in .env.traefik la stringa generata con: htpasswd -nb admin <password>
+```
+
+Poi crea l'env dell'**app** che avvii per primo. Partendo da **dev**:
+
+```bash
+cp .env.dev.example .env.dev
+```
+
+Compila in `deploy/compose/.env.dev`: `DJANGO_SECRET_KEY`, `POSTGRES_PASSWORD`
+e le credenziali che ti servono in staging (`BREVO_API_KEY`, `STRIPE_*`,
+`SENTRY_DSN`). I domini sono già impostati su `*.{{ project_domain_url }}`. Non serve
+impostare `DATABASE_URL`: è derivata dai `POSTGRES_*` nel compose (host `postgres:5432`).
+
+### 4. Avvia Traefik
+
+```bash
+cd /home/django/{{ git_repository_project_slug }}/deploy/compose
+touch traefik/acme.json && chmod 600 traefik/acme.json
+docker compose -f docker-compose.traefik.yml --env-file .env.traefik up -d
+```
+
+Crea anche la rete `traefik_public` richiesta dagli stack dev e prod. Traefik è
+condiviso e va avviato una sola volta: se più avanti aggiungi anche prod non
+serve riavviarlo.
+
+---
+
+## Deploy dev (be-dev.{{ project_domain_url }})
+
+> `.env.dev` lo hai già creato e compilato nel [bootstrap](#3-prepara-gli-env).
+
+### 1. Procurati l'immagine `:dev`
+
+**Opzione A — via CI**: imposta i 4 secret nell'Environment `development` del
+repo (GitHub → Settings → Environments → development → Add secret):
+
+| Secret | Valore |
+|---|---|
+| `VPS_HOST` | IP o hostname del server |
+| `VPS_USER` | `django` |
+| `VPS_SSH_PORT` | porta SSH (`22` se default) |
+| `VPS_SSH_KEY` | la **chiave privata** SSH (vedi sotto) |
+
+`VPS_SSH_KEY` è la chiave **privata** di una coppia dedicata al deploy: la CI la
+usa per connettersi al server come `django`. La chiave **pubblica** corrispondente
+va messa negli `authorized_keys` del server. Genera la coppia dalla tua macchina
+(sostituisci `<IP-DEL-SERVER>` con l'IP reale):
+
+```bash
+# 1. coppia dedicata, SENZA passphrase (la CI non può digitarla)
+ssh-keygen -t ed25519 -C "github-ci-deploy-{{ project_slug }}" -f ~/.ssh/{{ project_slug }}_deploy -N ""
+
+# 2. autorizza la chiave PUBBLICA sul server (utente django)
+ssh-copy-id -i ~/.ssh/{{ project_slug }}_deploy.pub django@<IP-DEL-SERVER>
+#   (in alternativa incolla il contenuto di {{ project_slug }}_deploy.pub
+#    in /home/django/.ssh/authorized_keys, con chmod 600)
+
+# 3. verifica che il login con quella chiave funzioni
+ssh -i ~/.ssh/{{ project_slug }}_deploy django@<IP-DEL-SERVER> 'echo ok'
+
+# 4. copia la chiave PRIVATA (tutto il file, righe BEGIN/END incluse) nel secret VPS_SSH_KEY
+cat ~/.ssh/{{ project_slug }}_deploy        # su macOS: pbcopy < ~/.ssh/{{ project_slug }}_deploy
+```
+
+> Usa una chiave **dedicata** al deploy (non la tua personale): così la puoi
+> revocare dal server togliendola da `authorized_keys` senza impatti su altro.
+
+Poi crea il branch `development` e fai push: la CI builda, pusha `:dev` su GHCR e
+fa il deploy via SSH. Funziona solo **dopo** il bootstrap (la CI non lo esegue).
+
+**Opzione B — build manuale sul server** (comoda per il primissimo avvio):
+
+```bash
+cd /home/django/{{ git_repository_project_slug }}
+docker build -t ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:dev .
+```
+
+### 2. Avvia lo stack dev
+
+```bash
+cd /home/django/{{ git_repository_project_slug }}/deploy/compose
+docker compose -f docker-compose.dev.yml --env-file .env.dev up -d
+```
+
+All'avvio del container `backend` l'entrypoint esegue `collectstatic` e
+`migrate`, poi lancia gunicorn su `:8000`. Se ora ti serve solo l'API (il sito
+pubblico è vuoto), avvia tutto tranne `frontend`:
+
+```bash
+docker compose -f docker-compose.dev.yml --env-file .env.dev up -d \
+  backend postgres redis celery celerybeat nginx-media
+```
+
+### 3. Superuser e verifica
+
+```bash
+cd /home/django/{{ git_repository_project_slug }}
+just dev-createsuperuser
+just dev-ps
+just dev-logs
+```
+
+Gli alias `dev-*` del `Justfile` equivalgono a
+`docker compose -f deploy/compose/docker-compose.dev.yml --env-file deploy/compose/.env.dev ...`.
+Poi prova `https://be-dev.{{ project_domain_url }}/api/` e l'admin. La prima richiesta HTTPS
+può metterci qualche secondo mentre Traefik ottiene il certificato; se qualcosa
+non torna, controlla `docker logs traefik`.
+
+---
+
+## Deploy prod (be.{{ project_domain_url }})
+
+Identico al track dev, sostituendo `dev`→`prod` ovunque:
+
+```bash
+cd /home/django/{{ git_repository_project_slug }}
+cp deploy/compose/.env.prod.example deploy/compose/.env.prod
+# compila .env.prod: DJANGO_SECRET_KEY, POSTGRES_PASSWORD, credenziali, e sostituisci
+#   i placeholder rimasti ({% raw %}{{ project_slug }}{% endraw %}, {% raw %}{{ project_domain_url }}{% endraw %}) con i valori reali
+# (DATABASE_URL è derivata dai POSTGRES_* nel compose; TRAEFIK_DASHBOARD_AUTH sta in .env.traefik)
+
+# immagine :latest — opzione A: push sul branch `production` (CI) / opzione B:
+docker build -t ghcr.io/{{ git_repository_org_name }}/{{ git_repository_project_slug }}:latest .
+
+cd deploy/compose
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# (o solo: backend postgres redis celery celerybeat nginx-media)
+
+cd /home/django/{{ git_repository_project_slug }}
+just prod-createsuperuser && just prod-logs
+```
+
+Verifica su `https://be.{{ project_domain_url }}/api/`.
+
+---
+
+## Deploy successivi
+
+Una volta fatto il bootstrap e il primo avvio:
+
+- **Con CI**: push su `development` (→ `:dev`) o `production` (→ `:latest`) →
+  build + push immagine + deploy via SSH automatici. (Per il prod via CI aggiungi
+  gli stessi 4 secret anche all'Environment `production`; la chiave SSH può essere
+  la stessa.)
+- **A mano** (esempio dev; per prod usa i file `prod`):
+  ```bash
+  cd /home/django/{{ git_repository_project_slug }}/deploy/compose
+  docker compose -f docker-compose.dev.yml --env-file .env.dev pull backend celery celerybeat
+  docker compose -f docker-compose.dev.yml --env-file .env.dev up -d backend celery celerybeat
+  ```
+
+> Nota GHCR: al primo push da CI il package nasce *privato*. Per un
+> `docker compose pull` manuale serve `docker login ghcr.io` con un PAT con
+> scope `read:packages` (oppure rendi pubblico il package).
+
+## Note
+
+- **Il servizio `frontend` (www/dev.{{ project_domain_url }}) probabilmente non parte bene**:
+  usa l'immagine del backend ma instrada sulla porta 80, mentre il container
+  serve gunicorn sulla 8000 e il sito pubblico (`frontend/site/`) è ancora vuoto.
+  Per ora avvia tutto tranne `frontend`.
+- Dev e prod hanno database, volumi e reti separati (`*_dev` vs `*_prod`):
+  girano in isolamento sullo stesso server, condividendo solo Traefik.
+- **La password è una sola** (`POSTGRES_PASSWORD`): `DATABASE_URL` la riusa,
+  derivata nel compose. **Cambiarla dopo il primo avvio non basta**: Postgres
+  imposta le credenziali solo alla prima inizializzazione del volume. Se la cambi
+  dopo, in **dev** ricrea il volume (`docker compose … down -v && up -d`, cancella
+  i dati); in **prod** non distruggere il volume — aggiornala nel DB con
+  `ALTER USER <user> WITH PASSWORD '…'` così combacia con `POSTGRES_PASSWORD`.
