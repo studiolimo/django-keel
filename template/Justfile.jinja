@@ -60,7 +60,7 @@ update:
     uv lock --upgrade
 
 
-# ─── VPS Commands (run from /home/django/{{ git_repository_project_slug }} on the VPS) ───────────────
+# ─── VPS Commands (run from ~/projects/{{ git_repository_project_slug }} on the VPS, user 'admin') ───
 
 DEV := "docker compose -f deploy/compose/docker-compose.dev.yml --env-file deploy/compose/.env.dev"
 PROD := "docker compose -f deploy/compose/docker-compose.prod.yml --env-file deploy/compose/.env.prod"

@@ -137,7 +137,7 @@ jobs:
           port: {% raw %}${{ secrets.VPS_SSH_PORT }}{% endraw %}
           script: |
             echo "{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}" | docker login ghcr.io -u "{% raw %}${{ github.actor }}{% endraw %}" --password-stdin
-            cd /home/django/{{ git_repository_project_slug }}
+            cd ~/projects/{{ git_repository_project_slug }}
             docker compose -f deploy/compose/docker-compose.dev.yml --env-file deploy/compose/.env.dev pull backend celery celerybeat
             docker compose -f deploy/compose/docker-compose.dev.yml --env-file deploy/compose/.env.dev up -d backend celery celerybeat
             docker logout ghcr.io
@@ -181,7 +181,7 @@ jobs:
           port: {% raw %}${{ secrets.VPS_SSH_PORT }}{% endraw %}
           script: |
             echo "{% raw %}${{ secrets.GITHUB_TOKEN }}{% endraw %}" | docker login ghcr.io -u "{% raw %}${{ github.actor }}{% endraw %}" --password-stdin
-            cd /home/django/{{ git_repository_project_slug }}
+            cd ~/projects/{{ git_repository_project_slug }}
             docker compose -f deploy/compose/docker-compose.prod.yml --env-file deploy/compose/.env.prod pull backend celery celerybeat
             docker compose -f deploy/compose/docker-compose.prod.yml --env-file deploy/compose/.env.prod up -d backend celery celerybeat
             docker logout ghcr.io
