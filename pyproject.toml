@@ -60,6 +60,11 @@ py-modules = []
 # Target Python 3.12+
 target-version = "py312"
 line-length = 100
+# Il payload `template/` e' codice del progetto GENERATO: va validato con la sua
+# ruff (regole diverse, es. ARG attivo + per-file-ignores), non con quella di keel.
+# Qui lintiamo solo gli strumenti del repo (tests/, conftest). I file generati
+# restano coperti da `test_project_has_valid_python_syntax` e dalla loro CI.
+extend-exclude = ["template"]
 
 [tool.ruff.lint]
 # Enable comprehensive rule sets

@@ -1,4 +1,9 @@
-"""Functional tests for template project generation."""
+"""Functional tests for template project generation.
+
+Il template e' opinionato (niente toggle): uv + PostgreSQL + DRF + SimpleJWT,
+app `account`/`core`/`dashboard`/`history`/`notifications`/`users`, dashboard
+staff. I test verificano la struttura e lo stack garantito dal progetto generato.
+"""
 
 import py_compile
 
@@ -64,7 +69,9 @@ def test_project_structure_is_correct(generate):
         "config",
         "config/settings",
         "apps",
+        "apps/account",
         "apps/core",
+        "apps/dashboard",
         "apps/users",
         "static",
         "media",
@@ -79,11 +86,12 @@ def test_project_structure_is_correct(generate):
         "config/__init__.py",
         "config/settings/__init__.py",
         "config/settings/base.py",
-        "config/settings/dev.py",
+        "config/settings/local.py",
         "config/settings/prod.py",
         "config/settings/test.py",
         "config/urls.py",
         "config/wsgi.py",
+        "config/asgi.py",
         "apps/core/views.py",
         "apps/users/models.py",
         ".gitignore",
@@ -123,12 +131,12 @@ def test_project_description_has_validator(template_dir):
     assert "empty" in validator.lower() or "not project_description" in validator
 
 
-# Dependency Manager Tests
+# Tech Stack Tests (opinionated, always-on)
 
 
 def test_uv_pyproject_generated(generate):
-    """Test that UV pyproject.toml is generated correctly."""
-    project = generate(dependency_manager="uv")
+    """pyproject.toml e' in formato uv/PEP 621 con le dipendenze base."""
+    project = generate()
     pyproject = project / "pyproject.toml"
 
     assert pyproject.exists()
@@ -136,148 +144,30 @@ def test_uv_pyproject_generated(generate):
     assert "[project]" in content
     assert "dependencies" in content
     assert "django>=" in content
+    # stack opinionato: niente poetry
+    assert "[tool.poetry]" not in content
 
 
-def test_poetry_pyproject_generated(generate):
-    """Test that Poetry pyproject.toml is generated correctly."""
-    project = generate(dependency_manager="poetry")
-    pyproject = project / "pyproject.toml"
+def test_drf_and_jwt_configured(generate):
+    """DRF + SimpleJWT + spectacular/filters/cors sono sempre configurati."""
+    project = generate()
+    content = (project / "config/settings/base.py").read_text()
 
-    assert pyproject.exists()
-    content = pyproject.read_text()
-    assert "[tool.poetry]" in content
-    assert "[tool.poetry.dependencies]" in content
-    assert "django" in content
-
-
-# API Style Tests
-
-
-def test_drf_api_generated(generate):
-    """Test that DRF API configuration is correct."""
-    project = generate(api_style="drf")
-
-    # Check settings
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
     assert "rest_framework" in content
+    assert "rest_framework_simplejwt" in content
     assert "drf_spectacular" in content
     assert "django_filters" in content
     assert "corsheaders" in content
-
-    # Check API app exists
-    assert (project / "apps/api").exists()
-    assert (project / "apps/api/urls.py").exists()
-    assert (project / "apps/api/views.py").exists()
+    assert "SIMPLE_JWT" in content
 
 
-def test_graphql_api_generated(generate):
-    """Test that GraphQL API configuration is correct."""
-    project = generate(api_style="graphql-strawberry")
+def test_opinionated_stack_excludes_removed_toggles(generate):
+    """Lo stack non include le vecchie alternative a toggle (graphql/allauth/channels)."""
+    project = generate()
+    content = (project / "config/settings/base.py").read_text()
 
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-    assert "strawberry" in content
-
-
-def test_both_apis_generated(generate):
-    """Test that both DRF and GraphQL can coexist."""
-    project = generate(api_style="both")
-
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-    assert "rest_framework" in content
-    assert "strawberry" in content
-
-
-def test_no_api_excludes_frameworks(generate):
-    """Test that no API style excludes API frameworks."""
-    project = generate(api_style="none")
-
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-    assert "rest_framework" not in content
     assert "strawberry" not in content
-
-
-# Frontend Option Tests
-
-
-def test_htmx_frontend_templates_generated(generate):
-    """Test that HTMX frontend generates templates."""
-    project = generate(frontend="htmx-tailwind")
-
-    templates_dir = project / "templates"
-    assert (templates_dir / "base.html").exists()
-
-    base_html = (templates_dir / "base.html").read_text()
-    assert "{% block" in base_html
-    assert "tailwindcss" in base_html
-    assert "htmx" in base_html
-
-
-def test_nextjs_frontend_generated(generate):
-    """Test that Next.js frontend is generated."""
-    project = generate(frontend="nextjs")
-
-    frontend_dir = project / "frontend"
-    assert frontend_dir.exists()
-    assert (frontend_dir / "package.json").exists()
-
-    package_json = (frontend_dir / "package.json").read_text()
-    assert "next" in package_json
-
-
-def test_no_frontend_has_minimal_templates(generate):
-    """Test that no frontend option has minimal templates."""
-    project = generate(frontend="none")
-
-    templates_dir = project / "templates"
-    # Should have directory but minimal content
-    assert templates_dir.exists()
-    # base.html should not exist
-    assert not (templates_dir / "base.html").exists()
-
-
-# Auth Backend Tests
-
-
-def test_allauth_configuration(generate):
-    """Test that allauth is configured correctly."""
-    project = generate(auth_backend="allauth")
-
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-
-    # Check allauth packages
-    assert "allauth" in content
-    assert "allauth.account" in content
-    assert "allauth.socialaccount" in content
-
-    # Check middleware
-    assert "allauth.account.middleware.AccountMiddleware" in content
-
-    # Check sites framework
-    assert "django.contrib.sites" in content
-
-    # Check new settings format
-    assert "ACCOUNT_LOGIN_METHODS" in content
-
-
-def test_jwt_configuration(generate):
-    """Test that JWT is configured correctly."""
-    project = generate(auth_backend="jwt")
-
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-    assert "simplejwt" in content or "SIMPLE_JWT" in content
-
-
-def test_both_auth_backends(generate):
-    """Test that both auth backends can coexist."""
-    project = generate(auth_backend="both")
-
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-    assert "allauth" in content
-    assert "simplejwt" in content or "SIMPLE_JWT" in content
+    assert "allauth" not in content
+    assert "channels" not in content
+    # l'API vive nelle singole app (apps/<x>/api), non in un'app `api` dedicata
+    assert not (project / "apps/api").exists()

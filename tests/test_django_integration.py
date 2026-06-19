@@ -100,21 +100,19 @@ def test_postgresql_database_configured(generate):
     assert "psycopg" in pyproject_content
 
 
-def test_sqlite_dev_postgres_prod_configuration(generate):
-    """Test SQLite for dev, PostgreSQL for prod configuration."""
-    project = generate(database="sqlite-dev-postgres-prod")
+def test_database_configuration(generate):
+    """Il DB e' configurato via DATABASE_URL; le settings locali estendono base."""
+    project = generate()
 
-    # Check that base settings use PostgreSQL by default
-    base_settings = project / "config/settings/base.py"
-    base_content = base_settings.read_text()
+    # Check that base settings read the DB from DATABASE_URL
+    base_content = (project / "config/settings/base.py").read_text()
     assert "DATABASES" in base_content
     assert 'env.db("DATABASE_URL")' in base_content
 
-    # Dev settings should exist and import from base
-    dev_settings = project / "config/settings/dev.py"
-    assert dev_settings.exists()
-    dev_content = dev_settings.read_text()
-    assert "from .base import *" in dev_content
+    # Local settings should exist and import from base
+    local_settings = project / "config/settings/local.py"
+    assert local_settings.exists()
+    assert "from .base import *" in local_settings.read_text()
 
 
 # Static Files Tests
@@ -203,16 +201,6 @@ def test_cors_middleware_when_api_enabled(generate):
 
     assert "CorsMiddleware" in content
     assert "CORS_ALLOWED_ORIGINS" in content
-
-
-def test_allauth_middleware_when_enabled(generate):
-    """Test that allauth middleware is included when enabled."""
-    project = generate(auth_backend="allauth")
-
-    settings = project / "config/settings/base.py"
-    content = settings.read_text()
-
-    assert "allauth.account.middleware.AccountMiddleware" in content
 
 
 # Model Configuration Tests
