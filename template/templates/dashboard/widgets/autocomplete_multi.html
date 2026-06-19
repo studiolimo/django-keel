@@ -1,0 +1,53 @@
+{% comment %}
+Autocomplete multiplo a chip (Alpine + fetch sull'endpoint JSON).
+- input hidden con name=campo per ogni voce selezionata (compatibile con
+  ModelMultipleChoiceField);
+- chip rimovibili + ricerca con dropdown.
+Stile scoped, nessun rebuild CSS/JS.
+{% endcomment %}
+<div class="acw"
+     x-data='{
+       items: {{ widget.selected_json }},
+       q: "",
+       results: [],
+       open: false,
+       url: "{{ widget.search_url }}",
+       search() {
+         fetch(this.url + "?q=" + encodeURIComponent(this.q.trim()))
+           .then(r => r.json())
+           .then(d => { this.results = d.filter(o => !this.items.some(i => i.id === o.id)); this.open = true; });
+       },
+       add(item) {
+         if (!this.items.some(i => i.id === item.id)) { this.items.push(item); }
+         this.q = ""; this.results = []; this.open = false;
+       },
+       remove(id) { this.items = this.items.filter(i => i.id !== id); }
+     }'
+     @click.outside="open = false">
+
+  <template x-for="it in items" :key="it.id">
+    <input type="hidden" name="{{ widget.name }}" :value="it.id">
+  </template>
+
+  <div class="acw__box">
+    <template x-for="it in items" :key="it.id">
+      <span class="acw__chip">
+        <span x-text="it.text"></span>
+        <button type="button" class="acw__chipx" @click="remove(it.id)" title="Rimuovi">&times;</button>
+      </span>
+    </template>
+    <input type="text" class="acw__input" autocomplete="off"
+           placeholder="{{ widget.placeholder|default:'Cerca e aggiungi…' }}"
+           {% if widget.attrs.disabled %}disabled{% endif %}
+           x-model="q"
+           @focus="open = true; search()"
+           @input.debounce.250ms="search()"
+           @keydown.escape="open = false">
+  </div>
+
+  <ul class="acw__menu" x-show="open && results.length" x-cloak>
+    <template x-for="o in results" :key="o.id">
+      <li class="acw__opt" @click="add(o)" x-text="o.text"></li>
+    </template>
+  </ul>
+</div>

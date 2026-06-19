@@ -1,0 +1,67 @@
+{% comment %}
+Autocomplete singolo generico (Alpine + fetch sull'endpoint JSON).
+- un input hidden con name=campo che contiene il pk selezionato (compatibile
+  con ModelChoiceField);
+- look "select clearable": il valore scelto riempie il box come testo, con "x"
+  per svuotare; quando e' vuoto diventa input di ricerca con chevron;
+- se la voce porta `edit_url`, il valore diventa un link (nuovo tab).
+Il blocco `acw_below` e' il punto di estensione per contenuti specifici di un
+dominio: estendi questo template e riempi il blocco (vedi docs/features/dashboard).
+Stile scoped (vedi autocomplete_style.html).
+{% endcomment %}
+<div class="acw"
+     x-data='{
+       selected: ({{ widget.selected_json }}[0] || null),
+       q: "",
+       results: [],
+       open: false,
+       url: "{{ widget.search_url }}",
+       search() {
+         fetch(this.url + "?q=" + encodeURIComponent(this.q.trim()))
+           .then(r => r.json())
+           .then(d => { this.results = d; this.open = true; });
+       },
+       choose(item) { this.selected = item; this.q = ""; this.results = []; this.open = false; },
+       clear() { this.selected = null; this.q = ""; this.results = []; }
+     }'
+     @click.outside="open = false">
+
+  <input type="hidden" name="{{ widget.name }}" :value="selected ? selected.id : ''">
+
+  <div class="acw__control">
+    {# Valore selezionato: testo a tutta larghezza + "x" per svuotare (look select). #}
+    <template x-if="selected">
+      <div class="acw__value">
+        {# Se la voce ha un edit_url il valore e' un link (nuovo tab), altrimenti testo. #}
+        <template x-if="selected.edit_url">
+          <a :href="selected.edit_url" target="_blank" rel="noopener"
+             class="acw__chiplink acw__valuetext" x-text="selected.text"
+             title="Apri in un nuovo tab"></a>
+        </template>
+        <template x-if="!selected.edit_url">
+          <span class="acw__valuetext" x-text="selected.text"></span>
+        </template>
+        <button type="button" class="acw__clear" @click="clear()" title="Rimuovi">&times;</button>
+      </div>
+    </template>
+    {# Nessun valore: input di ricerca con chevron a destra. #}
+    <input type="text" class="acw__search" autocomplete="off"
+           placeholder="{{ widget.placeholder|default:'Cerca…' }}"
+           x-show="!selected"
+           {% if widget.attrs.disabled %}disabled{% endif %}
+           x-model="q"
+           @focus="open = true; search()"
+           @input.debounce.250ms="search()"
+           @keydown.escape="open = false">
+    <i class="ri-arrow-down-s-line acw__chevron" x-show="!selected" aria-hidden="true"></i>
+  </div>
+
+  {# Punto di estensione: contenuti sotto il campo specifici di un dominio. #}
+  {% block acw_below %}{% endblock %}
+
+  <ul class="acw__menu" x-show="open && results.length" x-cloak>
+    <template x-for="o in results" :key="o.id">
+      <li class="acw__opt" @click="choose(o)" x-text="o.text"></li>
+    </template>
+  </ul>
+</div>

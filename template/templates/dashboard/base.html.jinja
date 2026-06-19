@@ -10,6 +10,8 @@
   {# Favicon: aggiungi qui i link quando il progetto ha i suoi asset in static/images/ #}
   <link rel="stylesheet" href="{% static 'fonts/remixicon.css' %}">
   <link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+  {# Stile scoped dei widget di autocomplete (select clearable + chip multipli). #}
+  {% include "dashboard/widgets/autocomplete_style.html" %}
   {% block extra_css %}{% endblock extra_css %}
 </head>
 <body class="bg-paper text-ink font-sans antialiased"
