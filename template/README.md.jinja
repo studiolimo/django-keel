@@ -38,27 +38,33 @@ git remote add origin git@github.com:{{ git_repository_org_name }}/{{ git_reposi
    uv sync
    ```
 
-2. **Check (and change) env variables**
+2. **Install git hooks** (pre-commit: ruff, mypy, ...). Da fare una volta per clone;
+   non si propaga col push.
+   ```bash
+   uv run pre-commit install
+   ```
+
+3. **Check (and change) env variables**
    ```bash
    .env # local env variables
    ```
 
-3. **Start development services**
+4. **Start development services**
    ```bash
    docker compose -f docker-compose.yml up
    ```
 
-4. **Run migrations**
+5. **Run migrations**
    ```bash
    uv run python manage.py migrate
    ```
 
-5. **Create superuser**
+6. **Create superuser**
    ```bash
    uv run python manage.py createsuperuser
    ```
 
-6. **Start development server**
+7. **Start development server**
    ```bash
    uv run python manage.py runserver
    ```

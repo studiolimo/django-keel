@@ -51,9 +51,10 @@ docs-serve:
 docs-build:
     uv run mkdocs build
 
-# Install dependencies
+# Install dependencies + git hooks (pre-commit: ruff, mypy, ...)
 install:
     uv sync --all-extras
+    uv run pre-commit install
 
 # Update dependencies
 update:
@@ -65,7 +66,7 @@ update:
 DEV := "docker compose -f deploy/compose/docker-compose.dev.yml --env-file deploy/compose/.env.dev"
 PROD := "docker compose -f deploy/compose/docker-compose.prod.yml --env-file deploy/compose/.env.prod"
 
-# Show status of dev stack
+{% raw %}# Show status of dev stack
 dev-ps:
     {{DEV}} ps
 
@@ -107,4 +108,4 @@ prod-createsuperuser:
 
 # Run migrations on prod
 prod-migrate:
-    {{PROD}} exec backend uv run python manage.py migrate
+    {{PROD}} exec backend uv run python manage.py migrate{% endraw %}
